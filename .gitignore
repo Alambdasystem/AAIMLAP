@@ -1,0 +1,8 @@
+# Ignore the virtual environment
+env/
+
+# Ignore the secret .env file
+.env
+
+# Ignore the chat history csv files
+chat_history*.csv
