@@ -9,11 +9,13 @@ import csv
 import asyncio
 import re
 from collections import defaultdict
-
+from pathlib import Path
 
 # Load the environment variables from the .env file
 load_dotenv()
+print("Loaded environment variables.")
 
+# Getting the Discord Bot Token from environment variables
 TOKEN = os.environ.get('DISCORD_BOT_TOKEN')
 
 intents = discord.Intents.default()
@@ -22,29 +24,40 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-
 def create_empty_chat_history():
     return pd.DataFrame(columns=['timestamp', 'author', 'content'])
 
-
 chat_histories = defaultdict(create_empty_chat_history)
 
-# Load the chat history from the CSV file into the DataFrame
+# Loading the chat history from the CSV file into the DataFrame
 chat_history = pd.read_csv('chat_history.csv', names=[
                            'timestamp', 'author', 'content'], skiprows=1)
 chat_history['timestamp'] = pd.to_datetime(
     chat_history['timestamp'], format="%Y-%m-%d %H:%M:%S.%f%z")
 chat_history = chat_history.dropna()  # remove blank lines
-
+print("Loaded chat history from CSV.")
 
 recall_role_instructions = "You are a helpful assistant that finds information in a conversation and answers user's questions about what has occurred or been said in this chat"
 summarize_role_instructions = "You are a helpful assistant that summarizes a conversation."
 
+def load_chat_history(channel_id):
+    csv_file = f'chat_history_{channel_id}.csv'
+    if Path(csv_file).exists():  # check if the file exists
+        # Load the chat history from the CSV file into the DataFrame
+        chat_history = pd.read_csv(csv_file, names=['timestamp', 'author', 'content'], skiprows=1, encoding='ISO-8859-1')
+        chat_history['timestamp'] = pd.to_datetime(chat_history['timestamp'], format="%Y-%m-%d %H:%M:%S.%f%z")
+        chat_history = chat_history.dropna()  # remove blank lines
+        print(f"Loaded chat history for channel {channel_id} from CSV.")
+    else:
+        chat_history = create_empty_chat_history()
+        print(f"No existing chat history for channel {channel_id}. Created new chat history.")
+    return chat_history
 
 async def answer_question(query, text):
     openai.api_key = os.environ.get("OPENAI_API_KEY")
 
     def sync_request():
+        print("Generating OpenAI Request...")
         return openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -58,11 +71,11 @@ async def answer_question(query, text):
         )
 
     loop = asyncio.get_event_loop()
+    print("Executing OpenAI Request...")
     response = await loop.run_in_executor(None, sync_request)
     answer = response.choices[0].message['content'].strip()
     print(f"Answer: {answer}")
     return answer
-
 
 async def generate_summary(text, query=None):
     openai.api_key = os.environ.get("OPENAI_API_KEY")
@@ -73,6 +86,7 @@ async def generate_summary(text, query=None):
         user_text = f"Please provide a summary of the following conversation:\n\n{text}"
 
     def sync_request():
+        print("Generating OpenAI Request for Summary...")
         return openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -85,18 +99,22 @@ async def generate_summary(text, query=None):
         )
 
     loop = asyncio.get_event_loop()
+    print("Executing OpenAI Request for Summary...")
     response = await loop.run_in_executor(None, sync_request)
     summary = response.choices[0].message['content'].strip()
     print(f"Summary: {summary}")
     return summary
 
-
 @bot.event
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
     print(f"Current Chat History: {chat_history}")
-
-
+    for guild in bot.guilds:  # iterate over all servers the bot is connected to
+            for channel in guild.channels:  # iterate over all channels in the server
+                if isinstance(channel, discord.TextChannel):  # make sure it's a text channel
+                    # Load the chat history for the channel
+                    chat_histories[channel.id] = load_chat_history(channel.id)
+    print("Loaded all chat histories.")
 @bot.event
 async def on_message(message):
     global chat_histories
@@ -106,7 +124,7 @@ async def on_message(message):
 
     content = message.content
 
-    # Use the channel ID as the key for the chat history
+    # Get the chat history for the current channel
     chat_history = chat_histories[message.channel.id]
 
     # If the message is not a command
@@ -115,17 +133,20 @@ async def on_message(message):
         chat_history.loc[len(chat_history)] = {
             'timestamp': message.created_at, 'author': message.author.name, 'content': content}
 
+        print(f"Added message to chat history of channel {message.channel.id}")
+
         # Append the new message to the CSV file
         with open(f'chat_history_{message.channel.id}.csv', 'a', newline='', encoding='utf-8') as f:
             csv_writer = csv.writer(f)
             csv_writer.writerow(
                 [message.created_at, message.author.name, content])
 
+        print(f"Added message to CSV for channel {message.channel.id}")
+
         # Update the chat_histories dictionary
         chat_histories[message.channel.id] = chat_history
 
     await bot.process_commands(message)
-
 
 @bot.command(name='recall')
 async def recall(ctx, *args):
@@ -141,7 +162,6 @@ async def recall(ctx, *args):
 
     summary = await answer_question(query, conversation_text)
     await ctx.send(summary)
-
 
 @bot.command(name='summarize')
 async def summarize(ctx, *args):
