@@ -151,17 +151,46 @@ async def on_message(message):
 @bot.command(name='recall')
 async def recall(ctx, *args):
     query = ' '.join(args)
+    max_tokens = 3000
 
     chat_history = chat_histories[ctx.channel.id]
 
-    # Filter out bot's own messages and messages starting with '!'
-    relevant_history = chat_history[~(chat_history['author'] == bot.user.name) & ~(
-        chat_history['content'].str.startswith('!'))]
-    conversation_text = "\n".join(
-        f"{row.timestamp} - {row.author}: {row.content}" for _, row in relevant_history.iterrows())
+    relevant_history = chat_history[
+        ~(chat_history['author'] == bot.user.name) & 
+        ~(chat_history['content'].str.startswith('!')) & 
+        (chat_history['content'].str.contains('|'.join(args), case=False, na=False))
+    ].tail(10)
+    print(f"relevant_history message{relevant_history}")
 
-    summary = await answer_question(query, conversation_text)
+    # Estimate token count
+    estimated_tokens = relevant_history['content'].apply(lambda x: len(x.split()))
+
+    # Split messages into two parts if estimated token count exceeds the limit
+    if estimated_tokens.sum() > max_tokens:
+        # Find the index where the cumulative sum of tokens exceeds the limit
+        split_index = estimated_tokens.cumsum().searchsorted(max_tokens)[0]
+
+        # Split the messages
+        part1 = "\n".join(
+            f"{row.timestamp} - {row.author}: {row.content}" for _, row in relevant_history.iloc[:split_index].iterrows()
+        )
+        part2 = "\n".join(
+            f"{row.timestamp} - {row.author}: {row.content}" for _, row in relevant_history.iloc[split_index:].iterrows()
+        )
+
+        # Send two recall requests
+        summary1 = await answer_question(query, part1)
+        summary2 = await answer_question(query, part2)
+        summary = f"Part 1: {summary1}\nPart 2: {summary2}"
+    else:
+        conversation_text = "\n".join(
+            f"{row.timestamp} - {row.author}: {row.content}" for _, row in relevant_history.iterrows()
+        )
+
+        summary = await answer_question(query, conversation_text)
+
     await ctx.send(summary)
+
 
 @bot.command(name='summarize')
 async def summarize(ctx, *args):
