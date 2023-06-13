@@ -45,7 +45,6 @@ def load_chat_history(channel_id):
     if Path(csv_file).exists():  # check if the file exists
         # Load the chat history from the CSV file into the DataFrame
         chat_history = pd.read_csv(csv_file, names=['timestamp', 'author', 'content'], skiprows=1, encoding='ISO-8859-1')
-        chat_history['timestamp'] = pd.to_datetime(chat_history['timestamp'], format="%Y-%m-%d %H:%M:%S.%f%z")
         chat_history = chat_history.dropna()  # remove blank lines
         print(f"Loaded chat history for channel {channel_id} from CSV.")
     else:
@@ -79,31 +78,40 @@ async def answer_question(query, text):
 
 async def generate_summary(text, query=None):
     openai.api_key = os.environ.get("OPENAI_API_KEY")
+    max_tokens = 4096  # Maximum tokens per request
+    summary = ""
+
+    chunks = [text[i : i + max_tokens] for i in range(0, len(text), max_tokens)]
+    for chunk in chunks:
+        def sync_request():
+            print("Generating OpenAI Request for Summary...")
+            return openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": summarize_role_instructions},
+                    {"role": "user", "content": chunk}
+                ],
+                max_tokens=150,
+                n=1,
+                temperature=0.7,
+            )
+
+        loop = asyncio.get_event_loop()
+        print("Executing OpenAI Request for Summary...")
+        response = await loop.run_in_executor(None, sync_request)
+        chunk_summary = response.choices[0].message['content'].strip()
+        summary += chunk_summary + " "
+
+    # Truncate summary to 4000 characters
+    summary = summary[:4000]
 
     if query:
-        user_text = f"Please provide a summary of the following conversation, focusing on {query}:\n\n{text}"
-    else:
-        user_text = f"Please provide a summary of the following conversation:\n\n{text}"
+        query_summary = await generate_summary(query)
+        summary = f"Summary for query '{query}': {query_summary}\n\nFull Summary: {summary}"
 
-    def sync_request():
-        print("Generating OpenAI Request for Summary...")
-        return openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": summarize_role_instructions},
-                {"role": "user", "content": user_text}
-            ],
-            max_tokens=150,
-            n=1,
-            temperature=0.7,
-        )
-
-    loop = asyncio.get_event_loop()
-    print("Executing OpenAI Request for Summary...")
-    response = await loop.run_in_executor(None, sync_request)
-    summary = response.choices[0].message['content'].strip()
-    print(f"Summary: {summary}")
     return summary
+
+
 
 @bot.event
 async def on_ready():
@@ -151,45 +159,26 @@ async def on_message(message):
 @bot.command(name='recall')
 async def recall(ctx, *args):
     query = ' '.join(args)
-    max_tokens = 3000
+    max_tokens = 4000  
 
     chat_history = chat_histories[ctx.channel.id]
 
     relevant_history = chat_history[
-        ~(chat_history['author'] == bot.user.name) & 
-        ~(chat_history['content'].str.startswith('!')) & 
+        ~(chat_history['author'] == bot.user.name) &
+        ~(chat_history['content'].str.startswith('!')) &
         (chat_history['content'].str.contains('|'.join(args), case=False, na=False))
     ].tail(10)
-    print(f"relevant_history message{relevant_history}")
 
-    # Estimate token count
-    estimated_tokens = relevant_history['content'].apply(lambda x: len(x.split()))
+    relevant_messages = "\n".join(
+        f"{row.timestamp} - {row.author}: {row.content}" for _, row in relevant_history.iterrows()
+    )
 
-    # Split messages into two parts if estimated token count exceeds the limit
-    if estimated_tokens.sum() > max_tokens:
-        # Find the index where the cumulative sum of tokens exceeds the limit
-        split_index = estimated_tokens.cumsum().searchsorted(max_tokens)[0]
-
-        # Split the messages
-        part1 = "\n".join(
-            f"{row.timestamp} - {row.author}: {row.content}" for _, row in relevant_history.iloc[:split_index].iterrows()
-        )
-        part2 = "\n".join(
-            f"{row.timestamp} - {row.author}: {row.content}" for _, row in relevant_history.iloc[split_index:].iterrows()
-        )
-
-        # Send two recall requests
-        summary1 = await answer_question(query, part1)
-        summary2 = await answer_question(query, part2)
-        summary = f"Part 1: {summary1}\nPart 2: {summary2}"
+    if len(relevant_messages) > max_tokens:
+        chunks = [relevant_messages[i:i + max_tokens] for i in range(0, len(relevant_messages), max_tokens)]
+        for chunk in chunks:
+            await ctx.send(chunk)
     else:
-        conversation_text = "\n".join(
-            f"{row.timestamp} - {row.author}: {row.content}" for _, row in relevant_history.iterrows()
-        )
-
-        summary = await answer_question(query, conversation_text)
-
-    await ctx.send(summary)
+        await ctx.send(relevant_messages)
 
 
 @bot.command(name='summarize')
@@ -206,5 +195,6 @@ async def summarize(ctx, *args):
 
     summary = await generate_summary(conversation_text, query)
     await ctx.send(summary)
+
 
 bot.run(TOKEN)
