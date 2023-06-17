@@ -105,6 +105,13 @@ async def generate_summary(text, query=None):
     print(f"Summary: {summary}")
     return summary
 
+from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+def dockerconfirm():
+    return 'Woohoo! Docker container is successfully running on this instance.'
+
 @bot.event
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
