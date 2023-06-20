@@ -40,3 +40,21 @@ Replace `your_discord_bot_token` with your actual Discord bot token, and `your_o
 - To summarize past conversations, type `!summarize your_query` in a Discord channel where the bot is active.
 
 Replace `your_query` with your desired query to narrow down the context of the summary. For example, `!summarize lunch plans` will summarize all the chat about lunch plans, and `!summarize lunch plans today` will do the same but limit it to just messages regarding today's lunch plans.
+
+## Command List
+
+- `createproject <project_name>`: Create a new project with the specified name.
+- `addtask <project_name> <task_description> <assignee> <deadline>`: Add a task to the specified project.
+- `viewproject <project_name>`: View detailed information about the specified project.
+- `viewtask <project_name> <task_id>`: Show detailed information about a specific task.
+- `updatetask <project_name> <task_id> <new_description>`: Update the description of a task.
+- `archiveproject <project_name>`: Archive the specified project.
+- `removetask <project_name> <task_id>`: Remove a task from the project.
+- `completetask <project_name> <task_id>`: Mark a task as completed.
+- `assigntask <project_name> <task_id> <new_assignee>`: Change the assignee of a task.
+- `changetaskdeadline <project_name> <task_id> <new_deadline>`: Modify the deadline of a task.
+- `viewarchives`: Show a list of archived projects.
+- `restoreproject <project_name>`: Restore an archived project.
+- `setpriority <project_name> <task_id> <priority_level>`: Set the priority level of a task.
+- `viewteam`: Display information about the project management team.
+- `assignrole <user> <role>`: Assign a role to a user in the project management team.
