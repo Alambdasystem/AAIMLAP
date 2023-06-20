@@ -632,18 +632,4 @@ async def summarize(ctx, *args):
     # await ctx.send(message)
     
     
-#@bot.command(name='assignrole')
-#async def assign_role(ctx, user, role):
-    # Check if the user is a member of the project management team
-    #if not is_team_member(user):
-        #await ctx.send(f"{user} is not a member of the project management team.")
-        #return
-
-    # Assign the specified role to the user
-    #if assign_role_to_user(user, role):
-        #await ctx.send(f"Role '{role}' assigned to {user} successfully.")
-    #else:
-        #await ctx.send("Failed to assign role. Please check the provided role and try again.")
-
-
 bot.run(TOKEN)

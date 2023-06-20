@@ -570,7 +570,6 @@ async def summarize(ctx, *args):
     # Send a confirmation message
     #await ctx.send(f"Project '{project_name}' has been restored.")
     
-    
 #@bot.command(name='setpriority')
 #async def set_priority(ctx, project_name, task_id, priority_level):
     # Check if the project name is provided
@@ -589,61 +588,17 @@ async def summarize(ctx, *args):
         #return
 
     # Check if the project exists
-    #if project_name not in projects:
-        #await ctx.send("Project not found.")
-        #return
-
-    # Get the project from the projects list or database
-    #project = projects[project_name]
-
-    # Find the task in the project's task list based on the task ID
-    #task = None
-    #for t in project['tasks']:
-        #if t['task_id'] == task_id:
-            #task = t
-            #break
-
-    # Check if the task exists
-    #if not task:
-        #await ctx.send("Task not found.")
-        #return
-
-    # Set the priority level of the task
-    #task['priority'] = priority_level
-
-    #await ctx.send(f"Priority level of Task {task_id} in Project {project_name} set to {priority_level}.")
-
-#@bot.command(name='viewteam')
-#async def view_team(ctx):
-    # Implementation to display information about the project management team members
     # ...
 
-    # Retrieve the team members from your data storage
-    # team_members = retrieve_team_members()
+    # Get the project from the projects list or database
+    # ...
 
-    # Generate a formatted message with the team members' information
-    # message = "Project Management Team Members:\n"
-    # for member in team_members:
-    #     member_name = member['name']
-    #     member_role = member['role']
-    #     message += f"- {member_name} ({member_role})\n"
+    # Find the task in the project's task list based on the task ID
+    # ...
 
-    # Send the formatted message to the channel
-    # await ctx.send(message)
-    
-    
-#@bot.command(name='assignrole')
-#async def assign_role(ctx, user, role):
-    # Check if the user is a member of the project management team
-    #if not is_team_member(user):
-        #await ctx.send(f"{user} is not a member of the project management team.")
-        #return
+    # Set the priority level of the task
+    # ...
 
-    # Assign the specified role to the user
-    #if assign_role_to_user(user, role):
-        #await ctx.send(f"Role '{role}' assigned to {user} successfully.")
-    #else:
-        #await ctx.send("Failed to assign role. Please check the provided role and try again.")
-
-
+    # Send a confirmation message
+    # ...
 bot.run(TOKEN)
