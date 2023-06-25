@@ -345,19 +345,18 @@ async def view_task(ctx):
 
             await ctx.send(task_info)
     
-#update task list 
-# @bot.command(name='updatetask')
-# async def update_task(ctx, task_description: str, new_status: str):
-#     found_tasks = [task for task in task_list if task['description'].lower() == task_description.lower()]
+#update 
+@bot.command(name='updatetask')
+async def update_task(ctx, task_description: str, new_status: str):
+    found_tasks = [task for task in task_list if task['description'].lower() == task_description.lower()]
 
-#     if not found_tasks:
-#         await ctx.send("Task not found.")
-#     else:
-#         for task in found_tasks:
-#             task['status'] = new_status
+    if not found_tasks:
+        await ctx.send("Task not found.")
+    else:
+        for task in found_tasks:
+            task['status'] = new_status
 
-#         await ctx.send(f"Task '{task_description}' status updated to '{new_status}'.")
-
+        await ctx.send(f"Task '{task_description}' status updated to '{new_status}'.")
 
 
     

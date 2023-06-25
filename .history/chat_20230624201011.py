@@ -345,21 +345,18 @@ async def view_task(ctx):
 
             await ctx.send(task_info)
     
-#update task list 
-# @bot.command(name='updatetask')
-# async def update_task(ctx, task_description: str, new_status: str):
-#     found_tasks = [task for task in task_list if task['description'].lower() == task_description.lower()]
-
-#     if not found_tasks:
-#         await ctx.send("Task not found.")
-#     else:
-#         for task in found_tasks:
-#             task['status'] = new_status
-
-#         await ctx.send(f"Task '{task_description}' status updated to '{new_status}'.")
-
-
-
+    
+@bot.command(name='updatetask')
+async def update_task(ctx, task_number: int, new_status: str):
+    if not task_list:
+        await ctx.send("The task list is empty.")
+    elif task_number < 1 or task_number > len(task_list):
+        await ctx.send("Invalid task number.")
+    else:
+        task_index = task_number - 1
+        task = task_list[task_index]
+        task['status'] = new_status
+        await ctx.send(f"Task {task_number} status updated to '{new_status}'.")
     
 #@bot.command(name='removetask')
 #async def remove_task(ctx, project_name, task_id):

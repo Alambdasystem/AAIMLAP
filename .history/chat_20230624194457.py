@@ -277,89 +277,114 @@ async def test_command(ctx, *args):
 
 
 # Add Task 
-task_list = []  # Declare an empty task list
-
 @bot.command(name='addtask')
-async def add_task(ctx):
-    # Ask for the task description
-    await ctx.send("Please provide a task description.")
+async def add_task(ctx, *args):
+    # Check if all required arguments are provided
+    if not task_description or not assignee or not deadline:
+        await ctx.send("Please provide a task description, assignee, and deadline.")
+        return
 
-    def check(message):
-        return message.author == ctx.author and message.channel == ctx.channel
+    # Create a new task with the provided details
+    task = {
+        'description': task_description,
+        'assignee': assignee,
+        'deadline': deadline,
+        'status': 'In Progress'
+    }
 
-    try:
-        # Wait for the user's response
-        description_message = await bot.wait_for('message', check=check, timeout=30)
+    # Add any additional logic here, such as adding the task to a project
 
-        # Get the task description from the user's response
-        task_description = description_message.content
-
-        # Ask for the assignee
-        await ctx.send("Please provide the assignee for the task.")
-
-        # Wait for the user's response
-        assignee_message = await bot.wait_for('message', check=check, timeout=30)
-
-        # Get the assignee from the user's response
-        assignee = assignee_message.content
-
-        # Ask for the deadline
-        await ctx.send("Please provide the deadline for the task.")
-
-        # Wait for the user's response
-        deadline_message = await bot.wait_for('message', check=check, timeout=30)
-
-        # Get the deadline from the user's response
-        deadline = deadline_message.content
-
-        # Create a new task with the provided details
-        task = {
-            'description': task_description,
-            'assignee': assignee,
-            'deadline': deadline,
-            'status': 'In Progress'
-        }
-
-        # Add the task to the task list
-        task_list.append(task)
-
-        await ctx.send("Task added successfully.")
-
-    except asyncio.TimeoutError:
-        await ctx.send("You took too long to respond. Task creation canceled.")
-
+    await ctx.send("Task added successfully.")
     
     
-@bot.command(name='viewtask')
-async def view_task(ctx):
-    if not task_list:
-        await ctx.send("The task list is empty.")
-    else:
-        for index, task in enumerate(task_list, start=1):
-            # Display the task information
-            task_info = f"Task {index}:\n" \
-                        f"Description: {task['description']}\n" \
-                        f"Assignee: {task['assignee']}\n" \
-                        f"Deadline: {task['deadline']}\n" \
-                        f"Status: {task['status']}\n"
+#@bot.command(name='viewtask')
+#async def view_task(ctx, project_name, task_id):
+    # Check if the project name is provided
+    #if not project_name:
+        #await ctx.send("Please provide a project name.")
+        #return
 
-            await ctx.send(task_info)
+    # Check if the task ID is provided
+    #if not task_id:
+        #await ctx.send("Please provide a task ID.")
+        #return
+
+    # Check if the project exists
+    #if project_name not in projects:
+        #await ctx.send("Project not found.")
+        #return
+
+    # Get the project from the projects list or database
+    #project = projects[project_name]
+
+    # Check if the task ID is valid
+    #if task_id < 0 or task_id >= len(project['tasks']):
+        #await ctx.send("Invalid task ID.")
+        #return
+
+    # Retrieve the task with the given ID from the project
+    #task = project['tasks'][task_id]
+
+    # Prepare the detailed information for display
+    # ...
+
+    # Send the task information as a response
+    # ...
+
+    #await ctx.send("Task information displayed successfully.")
     
-#update task list 
-# @bot.command(name='updatetask')
-# async def update_task(ctx, task_description: str, new_status: str):
-#     found_tasks = [task for task in task_list if task['description'].lower() == task_description.lower()]
+    
+#@bot.command(name='updatetask')
+#async def update_task(ctx, project_name, task_id, new_description):
+    # Check if the project name is provided
+    #if not project_name:
+        #await ctx.send("Please provide a project name.")
+        #return
 
-#     if not found_tasks:
-#         await ctx.send("Task not found.")
-#     else:
-#         for task in found_tasks:
-#             task['status'] = new_status
+    # Check if the task ID is provided
+    #if not task_id:
+        #await ctx.send("Please provide a task ID.")
+        #return
 
-#         await ctx.send(f"Task '{task_description}' status updated to '{new_status}'.")
+    # Check if the new description is provided
+    #if not new_description:
+        #await ctx.send("Please provide a new description for the task.")
+        #return
 
+    # Check if the project exists
+    #if project_name not in projects:
+        #await ctx.send("Project not found.")
+        #return
 
+    # Get the project from the projects list or database
+    #project = projects[project_name]
 
+    # Check if the task ID is valid
+    #if task_id < 0 or task_id >= len(project['tasks']):
+        #await ctx.send("Invalid task ID.")
+        #return
+
+    # Update the description of the task with the new description
+    # ...
+
+    #await ctx.send("Task description updated successfully.")
+    
+#@bot.command(name='archiveproject')
+#async def archive_project(ctx, project_name):
+    # Check if the project name is provided
+    #if not project_name:
+        #await ctx.send("Please provide a project name.")
+        #return
+
+    # Check if the project exists
+    #if project_name not in projects:
+        #await ctx.send("Project not found.")
+        #return
+
+    # Archive the project
+    # ...
+
+    #await ctx.send(f"Project '{project_name}' archived successfully.")
     
 #@bot.command(name='removetask')
 #async def remove_task(ctx, project_name, task_id):
