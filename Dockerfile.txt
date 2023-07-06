@@ -1,9 +1,17 @@
-FROM python:3.8-slim-buster
+FROM python:3.10
+# Allows us to see console logs in real time w/o buffer
+ENV PYTHONUNBUFFERED 1
+
 WORKDIR /app
-COPY requirements.txt requirements.txt
+
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+COPY requirements.txt .
 RUN pip3 install -r requirements.txt
+
 COPY . .
 
 EXPOSE 5000
-CMD ["python", "-m" , "flask", "run", "--host=0.0.0.0"]
+CMD ["python3", "-m", "flask", "run", "--host=0.0.0.0"]
 
