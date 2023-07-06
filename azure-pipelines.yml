@@ -1,19 +1,53 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
-- main
+  branches:
+    include:
+      - main
+
+variables:
+  secureFilePath: $(secureFile.secureFilePath)
 
 pool:
   vmImage: ubuntu-latest
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+- checkout: self
+
+- task: DownloadSecureFile@1
+  name: secureFile
+  displayName: 'Download secure file'
+  inputs:
+    secureFile: 'AAIMLAP.pem'
 
 - script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+    # Install the necessary dependencies
+    sudo apt-get update
+    sudo apt-get install -y unzip
+
+    # Download and install the AWS CLI
+    curl -o awscliv2.zip "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+    unzip awscliv2.zip
+    sudo ./aws/install --update
+  displayName: 'Install AWS CLI'
+
+- script: |
+    # Connect to the EC2 instance
+    chmod 600 $(secureFilePath)
+    ssh -o StrictHostKeyChecking=no -i "$(secureFilePath)" ec2-user@ec2-54-153-39-18.us-west-1.compute.amazonaws.com << EOF
+
+      # Ensuring old containers and images are removed
+      docker stop aaimlap_container
+      docker rm aaimlap_container
+      docker container prune -f
+      docker rmi aaimlap_image
+      docker image prune --force
+
+      # Pulling the latest version of the git repo, building and deploying the new container
+      cd AAIMLAP
+      sudo git pull origin main
+
+      # Build image
+      docker build -t aaimlap_image . -f Dockerfile.txt
+      docker run -d --name aaimlap_container -p 5000:80 aaimlap_image
+
+    EOF
+  displayName: 'Update Docker container on EC2 instance'
