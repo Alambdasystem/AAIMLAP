@@ -12,19 +12,9 @@ from collections import defaultdict
 from pathlib import Path
 from transformers import AlbertForQuestionAnswering, AlbertTokenizer
 import torch
-import json
+import json 
 
 
-
-# Read the CSV file
-df = pd.read_csv("chat_history.csv')
-
-# Convert DataFrame to JSON
-json_data = df.to_json(orient='records')
-
-# Save JSON data to a file
-with open('output.json', 'w') as file:
-    file.write(json_data)
 
 
 

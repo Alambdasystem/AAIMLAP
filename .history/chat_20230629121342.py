@@ -12,19 +12,8 @@ from collections import defaultdict
 from pathlib import Path
 from transformers import AlbertForQuestionAnswering, AlbertTokenizer
 import torch
-import json
+import uuid
 
-
-
-# Read the CSV file
-df = pd.read_csv("chat_history.csv')
-
-# Convert DataFrame to JSON
-json_data = df.to_json(orient='records')
-
-# Save JSON data to a file
-with open('output.json', 'w') as file:
-    file.write(json_data)
 
 
 
@@ -292,13 +281,18 @@ async def test_command(ctx, *args):
     print("Test command executed.")
 
 
+import uuid
 
 # Add Task
 task_list = []  # Declare an empty task list
+in_progress_tasks = {}  # Dictionary to track task creation in progress
 
 @bot.command(name='addtask')
 async def add_task(ctx):
-    if any(task['description'] == 'Please provide a task description.' for task in task_list):
+    user_id = ctx.author.id
+    channel_id = ctx.channel.id
+
+    if (user_id, channel_id) in in_progress_tasks:
         # A task creation is already in progress for this user and channel
         await ctx.send("A task creation is already in progress.")
         return
@@ -334,24 +328,33 @@ async def add_task(ctx):
         # Get the deadline from the user's response
         deadline = deadline_message.content
 
-        # Create a new task with the provided details and the user who created it
+        # Generate a new task ID using UUID
+        task_id = str(uuid.uuid4())
+
+        # Create a new task with the provided details and the generated task ID
         task = {
+            'id': task_id,
             'description': task_description,
             'assignee': assignee,
             'deadline': deadline,
-            'status': 'In Progress',
-            'created_by': ctx.author.name  # Add the created_by field
+            'status': 'In Progress'
         }
 
         # Add the task to the task list
         task_list.append(task)
+
+        # Add the user and channel to the in-progress tasks dictionary
+        in_progress_tasks[(user_id, channel_id)] = True
 
         await ctx.send("Task added successfully.")
 
     except asyncio.TimeoutError:
         await ctx.send("You took too long to respond. Task creation canceled.")
 
+    # Remove the user and channel from the in-progress tasks dictionary
+    del in_progress_tasks[(user_id, channel_id)]
 
+    
 #viewtask    
 @bot.command(name='viewtask')
 async def view_task(ctx):

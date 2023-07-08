@@ -12,20 +12,6 @@ from collections import defaultdict
 from pathlib import Path
 from transformers import AlbertForQuestionAnswering, AlbertTokenizer
 import torch
-import json
-
-
-
-# Read the CSV file
-df = pd.read_csv("chat_history.csv')
-
-# Convert DataFrame to JSON
-json_data = df.to_json(orient='records')
-
-# Save JSON data to a file
-with open('output.json', 'w') as file:
-    file.write(json_data)
-
 
 
 # Load the environment variables from the .env file
@@ -273,11 +259,9 @@ async def summarize(ctx, *args):
     await ctx.send(summary)
    
     
-# Testing
+# Testing 
 @bot.command(name='test')
 async def test_command(ctx, *args):
-    print("Test command invoked.")
-    
     # Process the test command arguments
     if len(args) == 0:
         await ctx.send("Please provide test arguments.")
@@ -288,21 +272,14 @@ async def test_command(ctx, *args):
 
     # Send the test results or output
     # ...
+
+    await ctx.send("Test command executed.")
     
-    print("Test command executed.")
+#Add Task 
 
-
-
-# Add Task
 task_list = []  # Declare an empty task list
-
 @bot.command(name='addtask')
 async def add_task(ctx):
-    if any(task['description'] == 'Please provide a task description.' for task in task_list):
-        # A task creation is already in progress for this user and channel
-        await ctx.send("A task creation is already in progress.")
-        return
-
     # Ask for the task description
     await ctx.send("Please provide a task description.")
 
@@ -334,13 +311,12 @@ async def add_task(ctx):
         # Get the deadline from the user's response
         deadline = deadline_message.content
 
-        # Create a new task with the provided details and the user who created it
+        # Create a new task with the provided details
         task = {
             'description': task_description,
             'assignee': assignee,
             'deadline': deadline,
-            'status': 'In Progress',
-            'created_by': ctx.author.name  # Add the created_by field
+            'status': 'In Progress'
         }
 
         # Add the task to the task list
@@ -352,6 +328,8 @@ async def add_task(ctx):
         await ctx.send("You took too long to respond. Task creation canceled.")
 
 
+
+    
 #viewtask    
 @bot.command(name='viewtask')
 async def view_task(ctx):
@@ -367,51 +345,21 @@ async def view_task(ctx):
                         f"Status: {task['status']}\n"
 
             await ctx.send(task_info)
-
             
-# @bot.command(name='updatetask')
-# async def update_task(ctx, task_description: str):
-#     # Find the task in the task list with a matching description
-#     found_tasks = [task for task in task_list if task['description'].lower() == task_description.lower()]
+#updatetask
+    
+@bot.command(name='updatetask')
+async def update_task(ctx, task_description: str, new_status: str):
+    found_tasks = [task for task in task_list if task['description'].lower() == task_description.lower()]
 
-#     # If no matching tasks are found, send a message indicating that the task was not found
-#     if not found_tasks:
-#         await ctx.send("Task not found.")
-#     else:
-#         # Get the first found task (assuming there's only one)
-#         task = found_tasks[0]
+    if not found_tasks:
+        await ctx.send("Task not found.")
+    else:
+        for task in found_tasks:
+            task['status'] = new_status
 
-#         # Ask for the assignee
-#         await ctx.send("Please provide the new assignee for the task.")
+        await ctx.send(f"Task '{task_description}' status updated to '{new_status}'.")
 
-#         def check_assignee(message):
-#             return message.author == ctx.author and message.channel == ctx.channel
-
-#         assignee_message = await bot.wait_for('message', check=check_assignee, timeout=30)
-#         new_assignee = assignee_message.content
-
-#         # Ask for the deadline
-#         await ctx.send("Please provide the new deadline for the task.")
-
-#         def check_deadline(message):
-#             return message.author == ctx.author and message.channel == ctx.channel
-
-#         deadline_message = await bot.wait_for('message', check=check_deadline, timeout=30)
-#         new_deadline = deadline_message.content
-
-#         # Ask for additional project information
-#         await ctx.send("Please provide any additional project information.")
-
-#         def check_info(message):
-#             return message.author == ctx.author and message.channel == ctx.channel
-
-#         info_message = await bot.wait_for('message', check=check_info, timeout=30)
-#         additional_info = info_message.content
-
-#         # Update the task description with additional information
-#         task['description'] += f"\nAssignee: {new_assignee}\nDeadline: {new_deadline}\nAdditional Info: {additional_info}"
-
-#         await ctx.send(f"Task '{task_description}' has been updated with the new information.")
 
 
 

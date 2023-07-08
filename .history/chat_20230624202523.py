@@ -12,6 +12,7 @@ from collections import defaultdict
 from pathlib import Path
 from transformers import AlbertForQuestionAnswering, AlbertTokenizer
 import torch
+import uuid
 
 
 # Load the environment variables from the .env file
@@ -312,8 +313,12 @@ async def add_task(ctx):
         # Get the deadline from the user's response
         deadline = deadline_message.content
 
+        # Generate a task ID if there is none
+        task_id = str(uuid.uuid4())
+
         # Create a new task with the provided details
         task = {
+            'id': task_id,
             'description': task_description,
             'assignee': assignee,
             'deadline': deadline,
@@ -327,7 +332,6 @@ async def add_task(ctx):
 
     except asyncio.TimeoutError:
         await ctx.send("You took too long to respond. Task creation canceled.")
-
     
     
 @bot.command(name='viewtask')
@@ -338,6 +342,7 @@ async def view_task(ctx):
         for index, task in enumerate(task_list, start=1):
             # Display the task information
             task_info = f"Task {index}:\n" \
+                        f"ID: {task['id']}\n" \
                         f"Description: {task['description']}\n" \
                         f"Assignee: {task['assignee']}\n" \
                         f"Deadline: {task['deadline']}\n" \

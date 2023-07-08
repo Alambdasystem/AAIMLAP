@@ -12,19 +12,8 @@ from collections import defaultdict
 from pathlib import Path
 from transformers import AlbertForQuestionAnswering, AlbertTokenizer
 import torch
-import json
+import uuid
 
-
-
-# Read the CSV file
-df = pd.read_csv("chat_history.csv')
-
-# Convert DataFrame to JSON
-json_data = df.to_json(orient='records')
-
-# Save JSON data to a file
-with open('output.json', 'w') as file:
-    file.write(json_data)
 
 
 
@@ -295,52 +284,46 @@ async def test_command(ctx, *args):
 
 # Add Task
 task_list = []  # Declare an empty task list
+task_creation_in_progress = False
 
 @bot.command(name='addtask')
 async def add_task(ctx):
-    if any(task['description'] == 'Please provide a task description.' for task in task_list):
-        # A task creation is already in progress for this user and channel
+    global task_creation_in_progress
+
+    if task_creation_in_progress:
+        # A task creation is already in progress
         await ctx.send("A task creation is already in progress.")
         return
 
-    # Ask for the task description
-    await ctx.send("Please provide a task description.")
-
-    def check(message):
-        return message.author == ctx.author and message.channel == ctx.channel
-
     try:
-        # Wait for the user's response
-        description_message = await bot.wait_for('message', check=check, timeout=30)
+        task_creation_in_progress = True
 
-        # Get the task description from the user's response
+        # Ask for the task description
+        await ctx.send("Please provide a task description.")
+        description_message = await bot.wait_for('message', check=check_author_channel(ctx), timeout=30)
         task_description = description_message.content
 
         # Ask for the assignee
         await ctx.send("Please provide the assignee for the task.")
-
-        # Wait for the user's response
-        assignee_message = await bot.wait_for('message', check=check, timeout=30)
-
-        # Get the assignee from the user's response
+        assignee_message = await bot.wait_for('message', check=check_author_channel(ctx), timeout=30)
         assignee = assignee_message.content
 
         # Ask for the deadline
         await ctx.send("Please provide the deadline for the task.")
-
-        # Wait for the user's response
-        deadline_message = await bot.wait_for('message', check=check, timeout=30)
-
-        # Get the deadline from the user's response
+        deadline_message = await bot.wait_for('message', check=check_author_channel(ctx), timeout=30)
         deadline = deadline_message.content
 
-        # Create a new task with the provided details and the user who created it
+        # Generate a new task ID using UUID
+        task_id = str(uuid.uuid4())
+
+        # Create a new task with the provided details and the generated task ID
         task = {
+            'id': task_id,
             'description': task_description,
             'assignee': assignee,
             'deadline': deadline,
             'status': 'In Progress',
-            'created_by': ctx.author.name  # Add the created_by field
+            'created_by': ctx.author
         }
 
         # Add the task to the task list
@@ -351,7 +334,15 @@ async def add_task(ctx):
     except asyncio.TimeoutError:
         await ctx.send("You took too long to respond. Task creation canceled.")
 
+    finally:
+        task_creation_in_progress = False
 
+# Helper function to check if message author and channel match the context
+def check_author_channel(ctx):
+    def check(message):
+        return message.author == ctx.author and message.channel == ctx.channel
+    return check
+    
 #viewtask    
 @bot.command(name='viewtask')
 async def view_task(ctx):

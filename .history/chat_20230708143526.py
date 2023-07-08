@@ -17,7 +17,7 @@ import json
 
 
 # Read the CSV file
-df = pd.read_csv("chat_history.csv')
+df = pd.read_csv('your_file.csv')
 
 # Convert DataFrame to JSON
 json_data = df.to_json(orient='records')

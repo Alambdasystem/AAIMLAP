@@ -12,19 +12,7 @@ from collections import defaultdict
 from pathlib import Path
 from transformers import AlbertForQuestionAnswering, AlbertTokenizer
 import torch
-import json
-
-
-
-# Read the CSV file
-df = pd.read_csv("chat_history.csv')
-
-# Convert DataFrame to JSON
-json_data = df.to_json(orient='records')
-
-# Save JSON data to a file
-with open('output.json', 'w') as file:
-    file.write(json_data)
+import uuid
 
 
 
@@ -291,11 +279,8 @@ async def test_command(ctx, *args):
     
     print("Test command executed.")
 
-
-
 # Add Task
 task_list = []  # Declare an empty task list
-
 @bot.command(name='addtask')
 async def add_task(ctx):
     if any(task['description'] == 'Please provide a task description.' for task in task_list):
@@ -334,13 +319,12 @@ async def add_task(ctx):
         # Get the deadline from the user's response
         deadline = deadline_message.content
 
-        # Create a new task with the provided details and the user who created it
+        # Create a new task with the provided details
         task = {
             'description': task_description,
             'assignee': assignee,
             'deadline': deadline,
-            'status': 'In Progress',
-            'created_by': ctx.author.name  # Add the created_by field
+            'status': 'In Progress'
         }
 
         # Add the task to the task list
@@ -351,7 +335,7 @@ async def add_task(ctx):
     except asyncio.TimeoutError:
         await ctx.send("You took too long to respond. Task creation canceled.")
 
-
+    
 #viewtask    
 @bot.command(name='viewtask')
 async def view_task(ctx):
