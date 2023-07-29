@@ -16,7 +16,7 @@ steps:
   name: secureFile
   displayName: 'Download secure file'
   inputs:
-    secureFile: 'AAIMLAP.pem'
+    secureFile: 'AAIMLAPPair.pem'
 
 - script: |
     # Install the necessary dependencies
@@ -32,7 +32,7 @@ steps:
 - script: |
     # Connect to the EC2 instance
     chmod 600 $(secureFilePath)
-    ssh -o StrictHostKeyChecking=no -i "$(secureFilePath)" ec2-user@ec2-54-153-39-18.us-west-1.compute.amazonaws.com << EOF
+    ssh -o StrictHostKeyChecking=no -i "$(secureFilePath)" ec2-user@ec2-13-56-196-184.us-west-1.compute.amazonaws.com << EOF
 
       # Ensuring old containers and images are removed
       docker stop aaimlap_container
