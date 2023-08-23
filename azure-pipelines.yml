@@ -17,6 +17,12 @@ steps:
   displayName: 'Download secure file'
   inputs:
     secureFile: 'AAIMLAP.pem'
+    
+- task: DownloadSecureFile@1
+  name: envFile 
+  displayName: 'Download .env file'
+  inputs:
+    secureFile: '.env'
 
 - script: |
     # Install the necessary dependencies
@@ -30,6 +36,8 @@ steps:
   displayName: 'Install AWS CLI'
 
 - script: |
+    DISCORD_BOT_TOKEN=$(cat $(envFile.secureFilePath) | grep DISCORD_BOT_TOKEN | cut -d '=' -f2)
+    OPENAI_API_KEY=$(cat $(envFile.secureFilePath) | grep OPENAI_API_KEY | cut -d '=' -f2)
     # Connect to the EC2 instance
     chmod 600 $(secureFilePath)
     ssh -o StrictHostKeyChecking=no -i "$(secureFilePath)" ec2-user@ec2-54-153-39-18.us-west-1.compute.amazonaws.com << EOF
@@ -47,7 +55,11 @@ steps:
 
       # Build image
       docker build -t aaimlap_image . -f Dockerfile.txt
-      docker-compose up -d
+      docker run -d \
+      --env DISCORD_BOT_TOKEN=$DISCORD_BOT_TOKEN \
+      --env OPENAI_API_KEY=$OPENAI_API_KEY \
+      --name aaimlap_container \
+      aaimlap_image
 
     EOF
   displayName: 'Update Docker container on EC2 instance'
