@@ -7,7 +7,7 @@ WORKDIR /app
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-RUN pip install transformers
+RUN pip install transformers==4.25.1
 
 COPY . .
 
