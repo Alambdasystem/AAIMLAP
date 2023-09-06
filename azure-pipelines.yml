@@ -57,7 +57,7 @@ steps:
 
       # Build image
       docker build -t aaimlap_image . -f Dockerfile.txt
-      docker run -d \
+      docker run -d -p 5000:5000\
       --env DISCORD_BOT_TOKEN=$DISCORD_BOT_TOKEN \
       --env OPENAI_API_KEY=$OPENAI_API_KEY \
       --name aaimlap_container \
