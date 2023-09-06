@@ -50,9 +50,10 @@ steps:
       docker rmi aaimlap_image
       docker image prune --force
 
-      # Pulling the latest version of the git repo, building and deploying the new container
+      sudo rm -rf ~/AAIMLAP
+      sudo git clone https://github.com/Alambdasystem/AAIMLAP.git
       cd AAIMLAP
-      sudo git pull origin main
+      
 
       # Build image
       docker build -t aaimlap_image . -f Dockerfile.txt
