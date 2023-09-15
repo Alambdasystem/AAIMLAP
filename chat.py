@@ -124,7 +124,7 @@ async def generate_summary(text, query=None):
     return summary
 
 async def answer_question(query, text):
-    openai.api_key = os.environ.get('OPENAI_API_KEY')
+    openai.api_key = os.getenv("OPENAI_API_KEY")
 
     def sync_request():
         print("Generating OpenAI Request...")
@@ -148,7 +148,7 @@ async def answer_question(query, text):
     return answer
 
 async def generate_summary(text, query=None):
-    openai.api_key = os.environ.get('OPENAI_API_KEY')
+    openai.api_key = os.getenv("OPENAI_API_KEY")
 
     if query:
         user_text = f"Please provide a summary of the following conversation, focusing on {query}:\n\n{text}"
