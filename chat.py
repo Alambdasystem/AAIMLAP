@@ -5,7 +5,7 @@ import discord
 import pandas as pd
 from discord.ext import commands,tasks
 import openai
-import csvF
+import csv
 import asyncio
 import re
 from collections import defaultdict
